@@ -1,0 +1,541 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>calculator: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/JamessPy/calculator-app/internal/calculator/calculator.go (100.0%)</option>
+				
+				<option value="file1">github.com/JamessPy/calculator-app/internal/calculator/service.go (100.0%)</option>
+				
+				<option value="file2">github.com/JamessPy/calculator-app/internal/config/config.go (100.0%)</option>
+				
+				<option value="file3">github.com/JamessPy/calculator-app/internal/httpapi/errors.go (100.0%)</option>
+				
+				<option value="file4">github.com/JamessPy/calculator-app/internal/httpapi/handler.go (96.8%)</option>
+				
+				<option value="file5">github.com/JamessPy/calculator-app/internal/httpapi/middleware.go (100.0%)</option>
+				
+				<option value="file6">github.com/JamessPy/calculator-app/internal/httpapi/router.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package calculator
+
+import (
+        "errors"
+)
+
+// Supported operations
+type Operation string
+
+const (
+        OpAdd        Operation = "add"
+        OpSubtract   Operation = "subtract"
+        OpMultiply   Operation = "multiply"
+        OpDivide     Operation = "divide"
+        OpPower      Operation = "power"
+        OpSqrt       Operation = "sqrt"
+        OpPercentage Operation = "percentage"
+)
+
+// Sentinel error for unsupported operations
+var (
+        ErrUnsupportedOperation = errors.New("unsupported operation")
+        ErrDivisionByZero       = errors.New("division by zero")
+        ErrNegativeSqrt         = errors.New("cannot calculate square root of a negative number")
+        ErrOperandRequired      = errors.New("operation requires at least one operand")
+        ErrOperandNotFinite     = errors.New("operand is not a finite number")
+        ErrResultNotFinite      = errors.New("result is not a finite number")
+)
+
+// Is valid checks if the operation is supported
+func (op Operation) IsValid() bool <span class="cov8" title="1">{
+        switch op </span>{
+        case OpAdd, OpSubtract, OpMultiply, OpDivide, OpPower, OpSqrt, OpPercentage:<span class="cov8" title="1">
+                return true</span>
+        default:<span class="cov8" title="1">
+                return false</span>
+        }
+}
+
+// IsUnary checks if the operation is unary (requires only one operand)
+func (op Operation) IsUnary() bool <span class="cov8" title="1">{
+        return op == OpSqrt
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package calculator
+
+import "math"
+
+// Service operates arithmetic operations
+type Service struct{}
+
+// NewService creates a new instance of Service
+func NewService() *Service <span class="cov8" title="1">{
+        return &amp;Service{}
+}</span>
+
+// Calculate, It takes an operation and two operands, and returns the result of the operation
+func (s *Service) Calculate(op Operation, a float64, b *float64) (float64, error) <span class="cov8" title="1">{
+        if !op.IsValid() </span><span class="cov8" title="1">{
+                return 0, ErrUnsupportedOperation
+        }</span>
+        <span class="cov8" title="1">if !isFinite(a) </span><span class="cov8" title="1">{
+                return 0, ErrOperandNotFinite
+        }</span>
+        <span class="cov8" title="1">if b != nil &amp;&amp; !isFinite(*b) </span><span class="cov8" title="1">{
+                return 0, ErrOperandNotFinite
+        }</span>
+        <span class="cov8" title="1">if op.IsUnary() </span><span class="cov8" title="1">{
+                return s.unary(op, a)
+        }</span>
+        // For binary options, 'b' is mandatory.
+        <span class="cov8" title="1">if b == nil </span><span class="cov8" title="1">{
+                return 0, ErrOperandRequired
+        }</span>
+        <span class="cov8" title="1">return s.binary(op, a, *b)</span>
+}
+
+// unary, it operates 1 operand and returns the result of the operation
+func (s *Service) unary(op Operation, a float64) (float64, error) <span class="cov8" title="1">{
+        switch op </span>{
+        case OpSqrt:<span class="cov8" title="1">
+                if a &lt; 0 </span><span class="cov8" title="1">{
+                        return 0, ErrNegativeSqrt
+                }</span>
+                <span class="cov8" title="1">return math.Sqrt(a), nil</span>
+        default:<span class="cov8" title="1">
+                return 0, ErrUnsupportedOperation</span>
+        }
+}
+
+// binary, it operates 2 operands and returns the result of the operation
+func (s *Service) binary(op Operation, a, b float64) (float64, error) <span class="cov8" title="1">{
+        var result float64
+        switch op </span>{
+        case OpAdd:<span class="cov8" title="1">
+                result = a + b</span>
+        case OpSubtract:<span class="cov8" title="1">
+                result = a - b</span>
+        case OpMultiply:<span class="cov8" title="1">
+                result = a * b</span>
+        case OpDivide:<span class="cov8" title="1">
+                if b == 0 </span><span class="cov8" title="1">{
+                        return 0, ErrDivisionByZero
+                }</span>
+                <span class="cov8" title="1">result = a / b</span>
+        case OpPower:<span class="cov8" title="1">
+                result = math.Pow(a, b)</span>
+        case OpPercentage:<span class="cov8" title="1">
+                result = a * b / 100</span>
+        default:<span class="cov8" title="1">
+                return 0, ErrUnsupportedOperation</span>
+        }
+
+        // check nan and inf
+        <span class="cov8" title="1">if !isFinite(result) </span><span class="cov8" title="1">{
+                return 0, ErrResultNotFinite
+        }</span>
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// isFinite checks if a float64 value is finite (not NaN or Inf)
+func isFinite(f float64) bool <span class="cov8" title="1">{
+        return !math.IsNaN(f) &amp;&amp; !math.IsInf(f, 0)
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Package config loads runtime configuration from environment variables.
+//
+// Environment variables are used rather than config files because the
+// service is meant to run in a container, where the environment is the
+// standard injection point (12-factor app, factor III).
+package config
+
+import (
+        "fmt"
+        "os"
+        "strconv"
+        "time"
+)
+
+// Config holds the runtime configuration of the service.
+type Config struct {
+        Port            string
+        ReadTimeout     time.Duration
+        WriteTimeout    time.Duration
+        IdleTimeout     time.Duration
+        ShutdownTimeout time.Duration
+        AllowedOrigins  []string
+}
+
+// Load reads the configuration from the environment, falling back to
+// defaults that are sensible for local development.
+func Load() (Config, error) <span class="cov8" title="1">{
+        cfg := Config{
+                Port:            getString("PORT", "8080"),
+                ReadTimeout:     5 * time.Second,
+                WriteTimeout:    10 * time.Second,
+                IdleTimeout:     60 * time.Second,
+                ShutdownTimeout: 15 * time.Second,
+                AllowedOrigins:  []string{"http://localhost:5173", "http://localhost:3000"},
+        }
+
+        if err := validatePort(cfg.Port); err != nil </span><span class="cov8" title="1">{
+                return Config{}, err
+        }</span>
+        <span class="cov8" title="1">return cfg, nil</span>
+}
+
+// Addr returns the address the HTTP server should listen on.
+// The host part is left empty so the server binds to all interfaces,
+// which is required inside a container.
+func (c Config) Addr() string <span class="cov8" title="1">{
+        return ":" + c.Port
+}</span>
+
+func getString(key, fallback string) string <span class="cov8" title="1">{
+        if v, ok := os.LookupEnv(key); ok &amp;&amp; v != "" </span><span class="cov8" title="1">{
+                return v
+        }</span>
+        <span class="cov8" title="1">return fallback</span>
+}
+
+func validatePort(port string) error <span class="cov8" title="1">{
+        n, err := strconv.Atoi(port)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("PORT must be a number, got %q", port)
+        }</span>
+        <span class="cov8" title="1">if n &lt; 1 || n &gt; 65535 </span><span class="cov8" title="1">{
+                return fmt.Errorf("PORT must be between 1 and 65535, got %d", n)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package httpapi
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/JamessPy/calculator-app/internal/calculator"
+)
+
+const (
+        codeInvalidJSON          = "INVALID_JSON"
+        codeValidationFailed     = "VALIDATION_FAILED"
+        codeUnsupportedOperation = "UNSUPPORTED_OPERATION"
+        codeDivisionByZero       = "DIVISION_BY_ZERO"
+        codeNegativeSquareRoot   = "NEGATIVE_SQUARE_ROOT"
+        codeOperandRequired      = "OPERAND_REQUIRED"
+        codeOperandNotFinite     = "OPERAND_NOT_FINITE"
+        codeResultNotFinite      = "RESULT_NOT_FINITE"
+        codeInternal             = "INTERNAL_ERROR"
+)
+
+// mapDomainError translates a domain error into an HTTP status and an API error body.
+//
+//        400 Bad Request          — the request is malformed or nonsensical
+//        422 Unprocessable Entity — the request is well-formed but mathematically undefined
+func mapDomainError(err error) (int, errorBody) <span class="cov8" title="1">{
+        switch </span>{
+        case errors.Is(err, calculator.ErrUnsupportedOperation):<span class="cov8" title="1">
+                return http.StatusBadRequest, errorBody{
+                        Code:    codeUnsupportedOperation,
+                        Message: "unsupported operation; supported: add, subtract, multiply, divide, power, sqrt, percentage",
+                }</span>
+        case errors.Is(err, calculator.ErrOperandRequired):<span class="cov8" title="1">
+                return http.StatusBadRequest, errorBody{
+                        Code:    codeOperandRequired,
+                        Message: "field 'b' is required for this operation",
+                }</span>
+        case errors.Is(err, calculator.ErrOperandNotFinite):<span class="cov8" title="1">
+                return http.StatusBadRequest, errorBody{
+                        Code:    codeOperandNotFinite,
+                        Message: "operands must be finite numbers",
+                }</span>
+        case errors.Is(err, calculator.ErrDivisionByZero):<span class="cov8" title="1">
+                return http.StatusUnprocessableEntity, errorBody{
+                        Code:    codeDivisionByZero,
+                        Message: "division by zero is undefined",
+                }</span>
+        case errors.Is(err, calculator.ErrNegativeSqrt):<span class="cov8" title="1">
+                return http.StatusUnprocessableEntity, errorBody{
+                        Code:    codeNegativeSquareRoot,
+                        Message: "square root of a negative number is undefined in real numbers",
+                }</span>
+        case errors.Is(err, calculator.ErrResultNotFinite):<span class="cov8" title="1">
+                return http.StatusUnprocessableEntity, errorBody{
+                        Code:    codeResultNotFinite,
+                        Message: "result exceeds the representable numeric range",
+                }</span>
+        default:<span class="cov8" title="1">
+                return http.StatusInternalServerError, errorBody{
+                        Code:    codeInternal,
+                        Message: "internal server error",
+                }</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Package httpapi exposes the calculator over HTTP.
+// It is the only package that knows about HTTP, JSON and status codes.
+package httpapi
+
+import (
+        "encoding/json"
+        "github.com/JamessPy/calculator-app/internal/calculator"
+        "log/slog"
+        "net/http"
+        "strings"
+)
+
+// Calculator is the behaviour this package needs from the domain layer.
+//
+// Go idiom: the consuming package declares the interface, not the producing
+// one. internal/calculator is unaware of httpapi, and tests can substitute
+// a stub without touching the domain.
+type Calculator interface {
+        Calculate(op calculator.Operation, a float64, b *float64) (float64, error)
+}
+
+// Handler serves the HTTP endpoints of the service.
+type Handler struct {
+        calc   Calculator
+        logger *slog.Logger
+}
+
+// NewHandler creates a new Handler.
+func NewHandler(calc Calculator, logger *slog.Logger) *Handler <span class="cov8" title="1">{
+        if logger == nil </span><span class="cov8" title="1">{
+                logger = slog.Default()
+        }</span>
+        <span class="cov8" title="1">return &amp;Handler{calc: calc, logger: logger}</span>
+}
+
+// Health responds to GET /healthz.
+func (h *Handler) Health(w http.ResponseWriter, _ *http.Request) <span class="cov8" title="1">{
+        h.writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}</span>
+
+// Calculate responds to POST /api/v1/calculate.
+// Calculate responds to POST /api/v1/calculate.
+func (h *Handler) Calculate(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var req calculateRequest
+        if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil </span><span class="cov8" title="1">{
+                h.writeError(w, http.StatusBadRequest, errorBody{
+                        Code:    codeInvalidJSON,
+                        Message: "request body is not valid JSON",
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">if strings.TrimSpace(req.Operation) == "" </span><span class="cov8" title="1">{
+                h.writeError(w, http.StatusBadRequest, errorBody{
+                        Code:    codeValidationFailed,
+                        Message: "field 'operation' is required",
+                })
+                return
+        }</span>
+        <span class="cov8" title="1">if req.A == nil </span><span class="cov8" title="1">{
+                h.writeError(w, http.StatusBadRequest, errorBody{
+                        Code:    codeValidationFailed,
+                        Message: "field 'a' is required and must be a number",
+                })
+                return
+        }</span>
+
+        // Normalisation belongs to the transport layer: the domain stays strict
+        // while the API stays forgiving about case and surrounding whitespace.
+        <span class="cov8" title="1">op := calculator.Operation(strings.ToLower(strings.TrimSpace(req.Operation)))
+
+        result, err := h.calc.Calculate(op, *req.A, req.B)
+        if err != nil </span><span class="cov8" title="1">{
+                status, body := mapDomainError(err)
+                if status == http.StatusInternalServerError </span><span class="cov8" title="1">{
+                        h.logger.Error("calculation failed unexpectedly", "operation", op, "err", err)
+                }</span>
+                <span class="cov8" title="1">h.writeError(w, status, body)
+                return</span>
+        }
+
+        <span class="cov8" title="1">resp := calculateResponse{
+                Operation: string(op),
+                A:         *req.A,
+                Result:    result,
+        }
+        if !op.IsUnary() </span><span class="cov8" title="1">{
+                resp.B = req.B
+        }</span>
+        <span class="cov8" title="1">h.writeJSON(w, http.StatusOK, resp)</span>
+}
+
+// writeJSON serialises payload as JSON and writes it with the given status.
+func (h *Handler) writeJSON(w http.ResponseWriter, status int, payload any) <span class="cov8" title="1">{
+        w.Header().Set("Content-Type", "application/json; charset=utf-8")
+        w.WriteHeader(status)
+
+        if err := json.NewEncoder(w).Encode(payload); err != nil </span><span class="cov0" title="0">{
+                // The status code and headers are already sent, so the response
+                // cannot be corrected at this point. Logging is all we can do.
+                h.logger.Error("failed to encode response", "err", err)
+        }</span>
+}
+
+// writeError writes an error body in the standard envelope.
+func (h *Handler) writeError(w http.ResponseWriter, status int, body errorBody) <span class="cov8" title="1">{
+        h.writeJSON(w, status, errorResponse{Error: body})
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package httpapi
+
+import (
+        "net/http"
+        "slices"
+)
+
+// CORS allows the frontend, served from a different port, to call this API.
+// The browser treats a different port as a different origin and blocks the
+// response unless these headers are present.
+//
+// Origins are matched against an explicit allow-list rather than reflecting
+// the request's Origin header, which would be equivalent to allowing all.
+func CORS(allowedOrigins []string) func(http.Handler) http.Handler <span class="cov8" title="1">{
+        return func(next http.Handler) http.Handler </span><span class="cov8" title="1">{
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                        origin := r.Header.Get("Origin")
+
+                        if origin != "" &amp;&amp; slices.Contains(allowedOrigins, origin) </span><span class="cov8" title="1">{
+                                w.Header().Set("Access-Control-Allow-Origin", origin)
+                                w.Header().Add("Vary", "Origin")
+                                w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                                w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+                        }</span>
+
+                        // Preflight: the browser asks permission before the real request.
+                        <span class="cov8" title="1">if r.Method == http.MethodOptions </span><span class="cov8" title="1">{
+                                w.WriteHeader(http.StatusNoContent)
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">next.ServeHTTP(w, r)</span>
+                })
+        }
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package httpapi
+
+import (
+        "log/slog"
+        "net/http"
+)
+
+//NewRouter wires up the HTTP routes for the service
+
+func NewRouter(calc Calculator, logger *slog.Logger, allowedOrigins []string) http.Handler <span class="cov8" title="1">{
+        h := NewHandler(calc, logger)
+
+        mux := http.NewServeMux()
+        mux.HandleFunc("GET /healthz", h.Health)
+        mux.HandleFunc("POST /api/v1/calculate", h.Calculate)
+
+        return CORS(allowedOrigins)(mux)
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

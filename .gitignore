@@ -1,0 +1,19 @@
+﻿# Go build output
+/bin/
+
+# Coverage working files (reports are committed under docs/)
+coverage.out
+coverage.html
+coverage.txt
+
+# Node
+web/node_modules/
+web/dist/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Scratch
+req.json

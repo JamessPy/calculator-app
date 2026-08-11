@@ -1,0 +1,5 @@
+web
+.git
+.github
+*.md
+coverage.*
