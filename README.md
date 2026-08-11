@@ -56,6 +56,19 @@ Coverage: backend **99.1%**, frontend **98.8%**. Reports in [`docs/`](./docs) �
 
 ## Design decisions
 
+**One service, not several.** The brief asks for "a backend microservice" —
+singular — so the goal here is one service built to microservice standards
+rather than a distributed system. It has a single responsibility, holds no
+state, is independently deployable as a container, is configured through the
+environment, exposes a health endpoint, and versions its API. Splitting
+arithmetic into `add-service`, `divide-service` and a gateway would look more
+like "microservices" while being worse in every way that matters: three
+network hops, three deployment pipelines, and no independent scaling or data
+ownership to justify any of it. Service boundaries follow business
+capabilities, not functions. If this service later grew a stateful capability
+— calculation history, say — that would be a genuine seam: a separate database,
+a different scaling profile, and an asynchronous event between the two.
+
 **Layout** follows the [official Go module guidance](https://go.dev/doc/modules/layout) for server projects: the binary in `cmd/`, all application code in `internal/`.
 
 **One endpoint** with the operation in the request body, rather than seven endpoints repeating the same validation.
@@ -75,10 +88,3 @@ Coverage: backend **99.1%**, frontend **98.8%**. Reports in [`docs/`](./docs) �
 **CORS is an allow-list**, not a reflected `Origin` header.
 
 **Standard library only.** `net/http.ServeMux` handles routing (method patterns since Go 1.22 give 404/405 for free) and `log/slog` handles structured logging, so `go.mod` has no dependencies.
-
-## Assumptions and limitations
-
-- `percentage(a, b)` means "b percent of a": `percentage(200, 15) = 30`.
-- Single service, not several — splitting arithmetic by operation would add network hops with no independent scaling or data ownership.
-- No graceful shutdown; the service is stateless with millisecond requests.
-- The frontend's API URL is fixed at build time by Vite, and CORS origins are hard-coded.
